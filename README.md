@@ -1,21 +1,5 @@
 # monaco-editor
 
-> A Vue.js project
+### Important thing i had to do
 
-## Build Setup
-
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-```
-
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+I had to change one of the nodes_modules files (node_modules/vue-monaco-editor/src/Monaco.vue) and change the line inside the __editorHasLoaded__ function, the code within contains an emit of an event, this event sends another param with is the editor, i had to add the monaco instance as well so i can access the models and change them.
