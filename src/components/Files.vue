@@ -1,14 +1,14 @@
 <template>
-  <div>
-    <div style="width: 20%; float: left">
-      <ul>
-        <template v-for="(file, index, key) in files">
-          <li @click.prevent="current = index">{{ index }}</li>
-        </template>
-      </ul>
-
+  <div style="display: flex; height: 100vh; width: 100vw">
+    <div id="files" style="width: 240px;border-right: 1px solid rgba(0, 0, 0, 0.08);">
+      <template v-for="(file, index, key) in files">
+        <div @click.prevent="current = index" :class="{'active': current == index}">{{ index }} -
+          <a style="color: red" @click="editFileName(index)"><small><em>Edit name</em></small></a></div>
+      </template>
+        <input type="text" class="input" v-model="newFileName" @keyup.enter="newFile"
+        placeholder="File name here (press enter to validate)">
     </div>
-    <div style="width: 70%; float: left; padding-left: 20px;">
+    <div style="display: flex;flex: 1 1 0%;position: relative;overflow: hidden;">
       <Edito
         @codeChanged="codeChanged"
         :files="files"
@@ -20,6 +20,7 @@
 </template>
 
 <script>
+  import Vue from 'vue';
   import Edito from "./Edito";
   // IMPORTANT NOTE: it seems like the state of the editor when changing between files only saves when the files don't
   //  errors, i checked multiple times and itseems like that is the case, creating a regular file that contains rubish
@@ -28,6 +29,7 @@
     name: 'files',
     components: {Edito},
     data: () => ({
+      newFileName: '',
       current: 'Main.js',
       files: {
         'App.js': `import React, { Component } from 'react';
@@ -96,7 +98,7 @@
                 width: 128,
               }
             });`,
-        'Main.js': `import React, { Component } from 'react';
+        'Main.js': `import React, { Component } from 'Main.js_file_';
             import { Text, View, StyleSheet } from 'react-native';
             import { Constants } from 'expo';
             import AssetExample from './AssetExample';
@@ -161,9 +163,10 @@
                 height: 128,
                 width: 128,
               }
-            });`
+            });`,
       },
     }),
+    computed: {},
     methods: {
       codeChanged: function (code) {
         this.files = {
@@ -171,10 +174,33 @@
           [this.current]: code
         }
       },
+      newFile() {
+        this.files = {
+          ...this.files,
+          [this.newFileName]: '// Write code here'
+        }
+
+        this.newFileName = '';
+      },
+      editFileName: function (path) {
+        const input = prompt('Enter the new file name');
+        if (input != null) {
+          this.files = {
+            ...this.files,
+            [input]: this.files[path]
+          };
+          Vue.delete(this.files, path);
+          this.$emit('renameFile', {
+            oldPath: path,
+            newPath: input
+          });
+        }
+
+      }
     },
     watch: {
       files: function (value) {
-        // console.log(this.files[this.current])
+        console.log(value)
       }
     },
     mounted() {
@@ -185,14 +211,22 @@
 
 
 <style>
-  ul li {
-    margin: 0;
-    padding: 0;
-    padding: 5px 10px;
-    border-bottom: 1px solid grey;
-    background-color: #ccc;
+  #files div {
+    font-size: 14px;
+    padding: 8px 24px;
+    background-color: transparent;
     color: black;
-    list-style: none;
     cursor: pointer;
+  }
+
+  .active {
+    background-color: black !important;
+    color: white !important;
+  }
+
+  .input {
+    position: absolute;
+    bottom: 0;
+    width: inherit;
   }
 </style>

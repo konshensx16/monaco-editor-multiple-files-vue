@@ -1,13 +1,12 @@
 <template>
-  <div>
-    {{ path }}
+  <div style="display: flex;flex: 1 1 0%;position: relative;overflow: hidden;">
     <MonacoEditor
-      height="600"
       language="javascript"
       :code="value"
       :editorOptions="options"
       @mounted="onMounted"
       @codeChange="onCodeChange"
+      @renameFile="_renamePath"
     >
     </MonacoEditor>
   </div>
@@ -52,6 +51,24 @@
         // emit back to the parent to update the code
         this.$emit('codeChanged', editor.getValue())
       },
+      _removePath: function (path) {
+        // remove the state
+        this.editorStates.delete(path);
+
+        let model = this.monaco.editor.getModels()
+          .find(model => model.uri.path === path)
+
+        model && model.dispose();
+      },
+      _renamePath: function ({oldPath, newPath}) {
+        const selection = this.editorStates.get(oldPath);
+
+        this.editorStates.delete(oldPath);
+        this.editorStates.set(newPath, selection);
+
+        this._removePath(oldPath);
+
+      },
       _initializeFile: function (path, value) {
         // check if we have a model, if we dont' create a new one
         let model = this.monaco.editor.getModels()
@@ -91,7 +108,6 @@
           .find(model => model.uri.path === path);
 
         this.editor.setModel(model);
-        console.log(this.editorStates.get(path))
         // Restore the editor state for the file
         const editorState = this.editorStates.get(path);
 
