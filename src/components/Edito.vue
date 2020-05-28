@@ -1,5 +1,6 @@
 <template>
   <div>
+    {{ path }}
     <MonacoEditor
       height="600"
       language="javascript"
@@ -70,10 +71,10 @@
             ]
           );
         } else {
-          model = monaco.editor.createModel(
+          model = this.monaco.editor.createModel(
             value,
             'javascript',
-            new monaco.Uri().with({ path })
+            new this.monaco.Uri().with({ path })
           );
           model.updateOptions({
             tabSize: 2,
@@ -90,7 +91,7 @@
           .find(model => model.uri.path === path);
 
         this.editor.setModel(model);
-
+        console.log(this.editorStates.get(path))
         // Restore the editor state for the file
         const editorState = this.editorStates.get(path);
 
@@ -102,11 +103,12 @@
       }
     },
     mounted() {
-
+    },
+    beforeUpdate() {
     },
     watch: {
       value: function (value) {
-        // create a new model from this? but this is the same editor
+        // this code is required for the undo redo operations
         let model = this.editor.getModel();
         model.pushEditOperations(
           [],
@@ -117,7 +119,33 @@
             },
           ]
         );
+      },
+      path: function (path, prevPath) {
+        this.editor.updateOptions(this.options);
+
+        if (this.path !== prevPath) {
+          this.editorStates.set(prevPath, this.editor.saveViewState());
+
+          this._openFile(path, this.value);
+        } else if (this.value !== this.editor.getModel().getValue()) {
+          const model = this.editor.getModel();
+
+          if (this.value !== model.getValue()) {
+            model.pushEditOperations(
+              [],
+              [
+                {
+                  range: model.getFullModelRange(),
+                  text: value,
+                },
+              ]
+            );
+          }
+        }
       }
+    },
+    beforeDestroy() {
+      this.editor && this.editor.dispose()
     }
   }
 </script>
